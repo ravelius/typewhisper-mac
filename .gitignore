@@ -18,7 +18,6 @@ Package.resolved
 
 # macOS
 .DS_Store
-._*
 *.swp
 *~.nib
 xcuserdata/
@@ -47,6 +46,9 @@ CodeSigning.local.xcconfig
 
 # Git worktrees
 .worktrees/
+
+# AppleDouble metadata on NAS checkouts
+._*
 
 # Python bytecode from the helper scripts
 __pycache__/
