@@ -11,6 +11,7 @@ final class KeyboardViewController: UIInputViewController {
     private var pollTimer: Timer?
     private var heightConstraint: NSLayoutConstraint?
     private var lastCorrection: (original: String, corrected: String)?
+    private var statusMessage: String?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -133,6 +134,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func press(_ key: String) {
+        statusMessage = nil
         switch key {
         case "⇧": shifted.toggle(); render()
         case "⌫": backspace()
@@ -212,6 +214,16 @@ final class KeyboardViewController: UIInputViewController {
 
     private func updateSuggestions() {
         suggestionRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        if let statusMessage {
+            let label = UILabel()
+            label.text = statusMessage
+            label.font = .systemFont(ofSize: 12)
+            label.numberOfLines = 2
+            label.textAlignment = .center
+            label.textColor = .secondaryLabel
+            suggestionRow.addArrangedSubview(label)
+            return
+        }
         let word = currentWord
         let suggestions = prediction.suggestions(for: word,
             after: word.isEmpty ? previousWord(beforeCurrent: false) : previousWord(beforeCurrent: true))
@@ -246,7 +258,7 @@ final class KeyboardViewController: UIInputViewController {
 
     private func beginDictation() {
         guard hasFullAccess, DictationBridge.store != nil else {
-            showMessage("Salli näppäimistön Täysi käyttö asetuksissa sanelua varten.")
+            showMessage("Salli Täysi käyttö asetuksissa sanelua varten.")
             return
         }
         pendingRequest = DictationBridge.request()
@@ -260,9 +272,8 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func showMessage(_ message: String) {
-        let alert = UIAlertController(title: "Sanelu", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        statusMessage = message
+        updateSuggestions()
     }
 
     private func checkResult() {

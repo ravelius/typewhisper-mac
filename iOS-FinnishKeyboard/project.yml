@@ -7,7 +7,7 @@ settings:
   base:
     SWIFT_VERSION: '5.9'
     TARGETED_DEVICE_FAMILY: '1,2'
-    DEVELOPMENT_TEAM: ''
+    DEVELOPMENT_TEAM: RCD77XPB7M
     MARKETING_VERSION: '0.1.0'
     CURRENT_PROJECT_VERSION: '1'
 packages:
@@ -26,6 +26,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: fi.klik.Sanelu
         INFOPLIST_FILE: App/Info.plist
         CODE_SIGN_ENTITLEMENTS: App/Sanelu.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
       - package: ArgmaxOSS
         product: WhisperKit

@@ -14,7 +14,7 @@ struct SaneluApp: App {
             ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Sanelu").font(.largeTitle.bold())
-                Text("Suomalainen näppäimistö ja paikallinen sanelu iPhonelle.")
+                Text("Suomalainen näppäimistö ja paikallinen sanelu.")
                     .foregroundStyle(.secondary)
                 GroupBox("Kokeile näppäimistöä") {
                     TextEditor(text: $sampleText)
@@ -131,7 +131,10 @@ final class LocalDictation: ObservableObject {
             if model == nil {
                 model = try await WhisperKit(WhisperKitConfig(model: "large-v3-v20240930_626MB"))
             }
-            let result = try await model!.transcribe(audioPath: url.path)
+            let result = try await model!.transcribe(
+                audioPath: url.path,
+                decodeOptions: DecodingOptions(language: "fi")
+            )
             let text = result.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
             lastText = text
             if let activeRequest { DictationBridge.finish(text, for: activeRequest) }
