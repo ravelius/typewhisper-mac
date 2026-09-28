@@ -60,3 +60,36 @@ fyysiseen iPhoneen, jos laite on saatavilla.
 
 Tämän pilvi-istunnon työtila oli Linux eikä sillä ollut pääsyä Mac Studion
 Xcodeen, Apple-tiliin tai iPhoneen. Älä oleta laitteen testausta tehdyksi.
+
+## Paikallisen jatkon tilanne 28.9.2026
+
+- NAS-checkout on edelleen haarassa `feature/finnish-ios-keyboard`. Xcode 27.0 ja
+  XcodeGen 2.46.0 rakentavat projektin. Simulaattoriin asennus onnistuu, kun
+  myös App Group -entitlements allekirjoitetaan molempiin targetteihin.
+- iPhone 18 Pro -simulaattorissa (iOS 27) on testattu Å/Ä/Ö, numerot,
+  symbolisivu, välilyönti, rivinvaihto, askelpalautin, sanaehdotuksen valinta,
+  `Kiitod` → `Kiitos` -korjaus ja sen välitön peruminen. Kun korjausasetus
+  poistettiin sovelluksesta, `Kiitod` säilyi korjaamatta allekirjoitetussa
+  App Group -simulaattorikoontiversiossa. iPhonen vaaka-asento ja iPad (A16)
+  -simulaattorin pysty- ja vaaka-asento on tarkistettu visuaalisesti.
+- Täysi käyttö pois käytöstä -tilassa sanelupainikkeen avaama hälytys kaatoi
+  aiemmin näppäimistölaajennuksen. Ohje näkyy nyt näppäimistön ehdotusrivillä,
+  ja uusi simulaattoritesti varmisti, ettei painike enää kaada laajennusta.
+- Pääsovellus sai mikrofoniluvan, tallensi äänen, latasi WhisperKit-mallin ja
+  litteroi testitallenteen. Tallenteen sisältö ei ollut hallittu suomenkielinen
+  testilause; suomenkielisen puheen tunnistus ja paluu toisen sovelluksen
+  tekstikenttään ovat edelleen vahvistamatta. Mallin kieli on asetettu `fi`.
+- App Store Connect -jakeluun allekirjoitettu `0.1.0 (1)` -IPA on NASissa
+  polussa `/Volumes/NAS-Homes/koodaus/Chat GPT/Näppis/builds/Sanelu-0.1.0-b1.ipa`.
+  `codesign --verify --deep --strict` meni läpi, ja sovelluksen sekä
+  laajennuksen jakeluprofiileissa on `group.fi.klik.sanelu`. Tämä ei vielä
+  tarkoita, että versio olisi ladattu TestFlightiin.
+- Xcode-tilillä oleva Apple Development -varmenne ei sisällä tämän koneen
+  avainparia. Jakelu-IPA onnistui tekemällä allekirjoittamaton arkisto,
+  lisäämällä arkistoon molempien targettien App Group -oikeudet ad hoc
+  -allekirjoituksella ja viemällä arkisto Xcoden automaattisella
+  App Store Connect -allekirjoituksella. Kehitysvarmennetta ei peruutettu.
+- TestFlight-lähetys pysähtyi virheeseen: App Store Connectista puuttuu
+  `fi.klik.Sanelu`-sovellustietue. App Store Connect pyytää erillistä
+  selainkirjautumista. Luo tietue ja lähetä sen jälkeen paketti; tarkista
+  käsittely sekä sisäisen testaajaryhmän saatavuus erikseen.
