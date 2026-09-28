@@ -8,6 +8,8 @@ settings:
     SWIFT_VERSION: '5.9'
     TARGETED_DEVICE_FAMILY: '1,2'
     DEVELOPMENT_TEAM: ''
+    MARKETING_VERSION: '0.1.0'
+    CURRENT_PROJECT_VERSION: '1'
 packages:
   ArgmaxOSS:
     url: https://github.com/argmaxinc/argmax-oss-swift.git

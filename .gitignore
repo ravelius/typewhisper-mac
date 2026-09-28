@@ -5,6 +5,7 @@ build-*/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 *.xcworkspace/xcuserdata/
 DerivedData/
+iOS-FinnishKeyboard/Sanelu.xcodeproj/
 *.hmap
 *.ipa
 *.dSYM.zip
