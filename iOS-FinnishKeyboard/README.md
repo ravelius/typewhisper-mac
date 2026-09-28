@@ -1,9 +1,12 @@
 # Sanelu – suomalainen iOS-näppäimistö ja paikallinen puheentunnistus
 
-Kokeiltava lähdekoodiversio. Sisältää Å/Ä/Ö-näppäimet, numerot, symbolit,
-sanaehdotukset, opitun sanaston sekä WhisperKit-pohjaisen puheen tekstiksi
--toiminnon. Ei tilausta eikä puheen pilvilitterointia. Ensimmäinen mallin
-lataus tarvitsee verkkoyhteyden ja noin 626 Mt tilaa.
+Kokeiltava iPhone-sovellus ja näppäimistölaajennus. Sisältää Å/Ä/Ö-näppäimet,
+numerot, symbolit, napautettavat sanaehdotukset, paikallisesti opitun sanaston,
+varovaisen kirjoitusvirheiden korjauksen sekä WhisperKit-pohjaisen puheen
+tekstiksi -toiminnon. Sovelluksessa on oma kokeilukenttä, tekstin kopiointi ja
+jako sekä asetukset oppimiselle ja automaattiselle korjaukselle. Ei tilausta
+eikä puheen pilvilitterointia. Ensimmäinen mallin lataus tarvitsee
+verkkoyhteyden ja noin 626 Mt tilaa.
 
 ## Rakennus Macilla
 
@@ -15,9 +18,14 @@ lataus tarvitsee verkkoyhteyden ja noin 626 Mt tilaa.
 4. Rakenna ja asenna fyysiseen iPhoneen. Lisää näppäimistö iPhonen
    asetuksista ja salli Täysi käyttö, jotta laajennus ja pääsovellus voivat
    jakaa tuloksen App Groupin kautta.
-5. Avaa sovellus kerran. Sanele tekstikentässä valitsemalla tämä näppäimistö,
-   paina 🎙, tallenna puhe ja pysäytä. Palaa iOS:n paluulinkistä alkuperäiseen
-   sovellukseen; näppäimistö lisää valmiin tekstin.
+5. Avaa Sanelu-sovellus ja kokeile näppäimistöä sovelluksen tekstikentässä.
+   Sanele painamalla näppäimistön 🎙-painiketta, tallenna puhe ja pysäytä.
+   Palaa alkuperäiseen sovellukseen ja tekstikenttään: näppäimistö lisää
+   valmiin tekstin. Jos iOS estää sovelluksen avaamisen laajennuksesta,
+   avaa Sanelu itse ja kopioi valmis teksti.
+
+GitHub Actionsin `Sanelu iOS build` tarkistaa lähdekoodin käännöksen
+iOS-simulaattorille. Se ei tee asennettavaa, allekirjoitettua iPhone-versiota.
 
 ## Käytetyt valmiit osat ja rajat
 
@@ -28,9 +36,11 @@ lataus tarvitsee verkkoyhteyden ja noin 626 Mt tilaa.
   kirjoitusasu-ehdotuksia **jos** laitteessa on vastaava kielisanasto.
   Lisäksi näppäimistöllä on pieni aloitussanasto ja paikallisesti opitut sanat
   sekä aiempien kirjoitusten sanapareista opitut seuraavan sanan ehdotukset.
-- Automaattinen korjaus, pyyhkäisykirjoitus ja emoji-valitsin puuttuvat.
-  Sanapareihin perustuva seuraavan sanan ennustus ei vielä vastaa QuickTypea. Tämä on
-  ensimmäinen ennakoivan kirjoittamisen toteutus, ei täysi QuickType-kopio.
+- Automaattinen korjaus koskee vain yhden kirjaimen selviä virheitä, kun
+  laitteessa on suomen oikolukusanasto. Se tapahtuu välilyönnillä, ja sen voi
+  perua heti askelpalauttimella tai poistaa asetuksista. Pyyhkäisykirjoitus ja
+  emoji-valitsin puuttuvat. Sanapareihin perustuva seuraavan sanan ennustus ei
+  vielä vastaa QuickTypea.
 - Näppäimistölaajennus ei voi käyttää mikrofonia. Pääsovellus tallentaa ja
   litteroi; tulos siirtyy App Groupissa takaisin näppäimistöön. iOS:n
   `extensionContext.open`-kutsun toiminta ja paluu alkuperäiseen sovellukseen
@@ -38,6 +48,5 @@ lataus tarvitsee verkkoyhteyden ja noin 626 Mt tilaa.
 - Kolmannen osapuolen näppäimistöt eivät näy salasanakentissä eivätkä
   sovelluksissa, jotka estävät ne erikseen.
 
-TypeWhisperin julkinen lähdekoodi on **macOS-sovellus**. iOS-lähdekoodi on
-yksityinen, joten tämä iOS-projekti ei väitä olevansa sen fork. Mac-versioon
-voi myöhemmin tehdä oman haaran erikseen GPLv3-lisenssiä noudattaen.
+Tämä iOS-toteutus on uusi kansio TypeWhisperin julkisen macOS-repositorion
+forkissa. TypeWhisperin yksityistä iOS-lähdekoodia ei käytetä.

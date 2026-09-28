@@ -13,6 +13,7 @@ final class FinnishPrediction {
     private let basics = "minä sinä hän me te he tämä tuossa täällä tänään huomenna eilen kyllä kiitos hei moi hyvää huomenta iltaa näkemiin miten miksi milloin missä mikä kuka olisi voisitko voisin voimme tulee olen olet on ovat oli olivat haluan haluaisin tarvitsen tarvitaan pitää pitäisi tehdä mennä tulla katsoa nähdä sanoa kysyä vastata kirjoittaa kuvata kuva valokuva kuvaus studio asiakas työ koti kauppa koulu koira aika päivä viikko kuukausi vuosi nyt sitten vielä myös paljon vähän todella aika hyvä hieno paras uusi vanha oikea väärä sama toinen ensimmäinen seuraava siitä tähän tänne sinne kanssa ilman jotta koska mutta tai että jos kun niin ei en et ole ollut voisi ehkä varmaan varmasti tämäkin niitä niitäkin nämä nuo siellä täällä mikäli kanssa minulla sinulla hänellä meidän teidän heidän minun sinun hänen meidän myös vielä oikein väärin valmis voidaan voisi tekemään tekeminen käytän käytössä kiitos paljon palaan takaisin pian odotan haluan haluaisin tehdä jotain muuta vastaus viesti sähköposti muistiinpano asia asiat kuvaus kuvaamaan kameralla suomeksi englanniksi teksti kirjoitan kirjoittaa kirjoittaminen sanelu sanelee sanelemaan".split(separator: " ").map(String.init)
 
     func learn(_ word: String, after previous: String? = nil) {
+        guard store?.object(forKey: DictationBridge.learningKey) as? Bool ?? true else { return }
         let normalized = word.lowercased(with: Locale(identifier: "fi_FI"))
         guard normalized.count >= 2, normalized.count <= 32,
               normalized.unicodeScalars.allSatisfy({ CharacterSet.letters.contains($0) }) else { return }
@@ -33,7 +34,26 @@ final class FinnishPrediction {
             }
             store?.set(pairs, forKey: pairKey)
         }
-        UITextChecker.learnWord(normalized)
+    }
+
+    /// Correct only an unambiguous, one-character Finnish spelling error.
+    /// The original spelling is preserved by the keyboard for immediate undo.
+    func correction(for word: String) -> String? {
+        guard word.count >= 3, let language else { return nil }
+        let range = NSRange(location: 0, length: (word as NSString).length)
+        let misspelled = checker.rangeOfMisspelledWord(in: word, range: range,
+            startingAt: 0, wrap: false, language: language)
+        guard misspelled.location != NSNotFound else { return nil }
+        let lower = word.lowercased(with: Locale(identifier: "fi_FI"))
+        let candidates = checker.guesses(forWordRange: range, in: word, language: language) ?? []
+        guard let candidate = candidates.first(where: {
+            let proposed = $0.lowercased(with: Locale(identifier: "fi_FI"))
+            return proposed.first == lower.first && proposed != lower &&
+                proposed.count == lower.count &&
+                zip(proposed, lower).filter { $0.0 != $0.1 }.count == 1
+        }) else { return nil }
+        return word.first?.isUppercase == true
+            ? candidate.prefix(1).uppercased() + String(candidate.dropFirst()) : candidate
     }
 
     func suggestions(for typedPrefix: String, after previous: String? = nil) -> [String] {
@@ -61,7 +81,8 @@ final class FinnishPrediction {
             let a = counts[$0, default: 0], b = counts[$1, default: 0]
             if a != b { return a > b }
             if $0.hasPrefix(prefix) != $1.hasPrefix(prefix) { return $0.hasPrefix(prefix) }
-            return $0.count < $1.count
+            if $0.count != $1.count { return $0.count < $1.count }
+            return $0.localizedStandardCompare($1) == .orderedAscending
         }.prefix(3).map { candidate in
             typedPrefix.first?.isUppercase == true ? candidate.prefix(1).uppercased() + String(candidate.dropFirst()) : candidate
         }

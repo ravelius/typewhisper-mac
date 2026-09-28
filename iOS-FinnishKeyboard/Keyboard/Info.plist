@@ -8,7 +8,7 @@
     <key>NSExtensionAttributes</key><dict>
       <key>PrimaryLanguage</key><string>fi-FI</string>
       <key>RequestsOpenAccess</key><true/>
-      <key>IsASCIICapable</key><false/>
+      <key>IsASCIICapable</key><true/>
     </dict>
   </dict>
 </dict></plist>

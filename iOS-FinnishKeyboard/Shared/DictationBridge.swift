@@ -6,6 +6,8 @@ enum DictationBridge {
     private static let resultIDKey = "dictation.result.id"
     private static let resultTextKey = "dictation.result.text"
     private static let consumedKey = "dictation.result.consumed"
+    static let learningKey = "prediction.learning.enabled"
+    static let autocorrectKey = "prediction.autocorrect.enabled"
 
     static var store: UserDefaults? { UserDefaults(suiteName: groupID) }
 
@@ -20,8 +22,14 @@ enum DictationBridge {
 
     static func finish(_ text: String, for id: String) {
         guard !text.isEmpty else { return }
+        guard currentRequest == id else { return }
         store?.set(text, forKey: resultTextKey)
         store?.set(id, forKey: resultIDKey) // Commit marker written last.
+    }
+
+    static func cancel(_ id: String) {
+        guard currentRequest == id else { return }
+        store?.removeObject(forKey: requestKey)
     }
 
     static func takeResult(for id: String) -> String? {
@@ -30,6 +38,7 @@ enum DictationBridge {
               store.string(forKey: consumedKey) != id,
               let text = store.string(forKey: resultTextKey), !text.isEmpty else { return nil }
         store.set(id, forKey: consumedKey)
+        cancel(id)
         return text
     }
 }

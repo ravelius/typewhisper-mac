@@ -3,13 +3,14 @@ import UIKit
 final class KeyboardViewController: UIInputViewController {
     private enum Page { case letters, numbers, symbols }
     private var page: Page = .letters
-    private var shifted = false
+    private var shifted = true
     private let prediction = FinnishPrediction()
     private let suggestionRow = UIStackView()
     private let keys = UIStackView()
     private var pendingRequest: String?
     private var pollTimer: Timer?
     private var heightConstraint: NSLayoutConstraint?
+    private var lastCorrection: (original: String, corrected: String)?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,11 +39,13 @@ final class KeyboardViewController: UIInputViewController {
     override func textDidChange(_ textInput: UITextInput?) {
         super.textDidChange(textInput)
         let before = textDocumentProxy.documentContextBeforeInput ?? ""
-        if before.isEmpty || before.hasSuffix(". ") || before.hasSuffix("! ") || before.hasSuffix("? ") {
+        let sentenceStart = before.isEmpty || [". ", "! ", "? ", "\n"].contains(where: before.hasSuffix)
+        if sentenceStart && !shifted && page == .letters {
             shifted = true
-            if page == .letters { render(); return }
+            render()
+        } else {
+            updateSuggestions()
         }
-        updateSuggestions()
     }
 
     private func setup() {
@@ -126,24 +129,32 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     @objc private func repeatBackspace(_ gesture: UILongPressGestureRecognizer) {
-        if gesture.state == .began || gesture.state == .changed {
-            textDocumentProxy.deleteBackward()
-            updateSuggestions()
-        }
+        if gesture.state == .began || gesture.state == .changed { backspace() }
     }
 
     private func press(_ key: String) {
         switch key {
         case "⇧": shifted.toggle(); render()
-        case "⌫": textDocumentProxy.deleteBackward(); updateSuggestions()
+        case "⌫": backspace()
         case "123": page = .numbers; render()
         case "#+=": page = .symbols; render()
         case "ABC": page = .letters; render()
         case "🌐": advanceToNextInputMode()
         case "🎙": beginDictation()
-        case "välilyönti": commitCurrentWord(); textDocumentProxy.insertText(" "); shifted = false; render()
-        case "↵": commitCurrentWord(); textDocumentProxy.insertText("\n"); shifted = true; render()
+        case "välilyönti":
+            let before = textDocumentProxy.documentContextBeforeInput ?? ""
+            commitCurrentWord(allowCorrection: true)
+            textDocumentProxy.insertText(" ")
+            shifted = [".", "!", "?"].contains(where: before.hasSuffix)
+            render()
+        case "↵":
+            lastCorrection = nil
+            commitCurrentWord()
+            textDocumentProxy.insertText("\n")
+            shifted = true
+            render()
         default:
+            lastCorrection = nil
             if ".!?".contains(key) { commitCurrentWord() }
             textDocumentProxy.insertText(shifted ? key.uppercased() : key)
             if key.count == 1 && key.first?.isLetter == true { shifted = false }
@@ -157,9 +168,34 @@ final class KeyboardViewController: UIInputViewController {
         return String(before.reversed().prefix { $0.isLetter || $0 == "-" }.reversed())
     }
 
-    private func commitCurrentWord() {
+    private func commitCurrentWord(allowCorrection: Bool = false) {
         let word = currentWord
-        if !word.isEmpty { prediction.learn(word, after: previousWord(beforeCurrent: true)) }
+        guard !word.isEmpty else { lastCorrection = nil; return }
+        var committed = word
+        if allowCorrection,
+           (DictationBridge.store?.object(forKey: DictationBridge.autocorrectKey) as? Bool ?? true),
+           let corrected = prediction.correction(for: word) {
+            for _ in word { textDocumentProxy.deleteBackward() }
+            textDocumentProxy.insertText(corrected)
+            lastCorrection = (original: word, corrected: corrected)
+            committed = corrected
+        } else {
+            lastCorrection = nil
+        }
+        prediction.learn(committed, after: previousWord(beforeCurrent: true))
+    }
+
+    private func backspace() {
+        if let lastCorrection,
+           textDocumentProxy.documentContextBeforeInput?.hasSuffix(lastCorrection.corrected + " ") == true {
+            textDocumentProxy.deleteBackward() // Space
+            for _ in lastCorrection.corrected { textDocumentProxy.deleteBackward() }
+            textDocumentProxy.insertText(lastCorrection.original)
+        } else {
+            textDocumentProxy.deleteBackward()
+        }
+        lastCorrection = nil
+        render()
     }
 
     private func previousWord(beforeCurrent: Bool) -> String? {
@@ -179,7 +215,8 @@ final class KeyboardViewController: UIInputViewController {
         let word = currentWord
         let suggestions = prediction.suggestions(for: word,
             after: word.isEmpty ? previousWord(beforeCurrent: false) : previousWord(beforeCurrent: true))
-        for value in suggestions {
+        let choices = word.isEmpty ? suggestions : [word] + Array(suggestions.prefix(2))
+        for value in choices {
             let button = UIButton(type: .system)
             button.setTitle(value, for: .normal)
             button.titleLabel?.font = .systemFont(ofSize: 16)
@@ -188,7 +225,7 @@ final class KeyboardViewController: UIInputViewController {
             button.addAction(UIAction { [weak self] _ in self?.choose(value) }, for: .touchUpInside)
             suggestionRow.addArrangedSubview(button)
         }
-        if suggestions.isEmpty {
+        if choices.isEmpty {
             let label = UILabel()
             label.text = pendingRequest == nil ? "suomi · ä ö å" : "Palaa tähän sanelun jälkeen"
             label.textAlignment = .center
@@ -198,6 +235,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private func choose(_ suggestion: String) {
+        lastCorrection = nil
         let precedingWord = previousWord(beforeCurrent: !currentWord.isEmpty)
         for _ in currentWord { textDocumentProxy.deleteBackward() }
         textDocumentProxy.insertText(suggestion + " ")
